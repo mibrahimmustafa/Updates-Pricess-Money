@@ -9,7 +9,9 @@ import '../controllers/default_currency_controller.dart';
 import '../controllers/user_prefs_controller.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.showAppBar = true});
+
+  final bool showAppBar;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -38,7 +40,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.t('settings_title'))),
+      appBar: widget.showAppBar
+          ? AppBar(title: Text(l.t('settings_title')))
+          : null,
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

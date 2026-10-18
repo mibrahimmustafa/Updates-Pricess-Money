@@ -80,8 +80,16 @@ class AppConstants {
     return '$first$second';
   }
 
-  /// Currencies shown out of the box.
-  static const defaultVisibleCurrencies = {usd, sar, egp};
+  /// Currencies shown out of the box — a wide spread of Arab and world
+  /// majors. The user can trim/add anything in Settings.
+  static const defaultVisibleCurrencies = {
+    // core
+    usd, 'EUR', 'GBP', 'JPY', 'CNY', 'TRY',
+    // Gulf
+    sar, 'AED', 'QAR', 'KWD', 'BHD', 'OMR',
+    // Levant & North Africa
+    egp, 'JOD', 'MAD', 'DZD', 'TND', 'LYD',
+  };
 
   /// Quick-select grouping presets (Settings).
   static const gccCurrencies = {'SAR', 'AED', 'QAR', 'KWD', 'BHD', 'OMR'};

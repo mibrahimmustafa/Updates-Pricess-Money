@@ -7,7 +7,6 @@ import 'alerts_screen.dart';
 import 'banks_screen.dart';
 import 'chart_screen.dart';
 import 'jewelry_calculator_screen.dart';
-import 'settings_screen.dart';
 import 'time_machine_screen.dart';
 
 /// Overflow menu screen with secondary destinations.
@@ -26,7 +25,6 @@ class MoreScreen extends ConsumerWidget {
       ('diamond', l.t('calc_title'), const JewelryCalculatorScreen()),
       ('history', l.t('timemachine_title'), const TimeMachineScreen()),
       ('account_balance', l.t('banks_title'), const BanksScreen()),
-      ('settings', l.t('settings_title'), const SettingsScreen()),
     ];
 
     return Scaffold(

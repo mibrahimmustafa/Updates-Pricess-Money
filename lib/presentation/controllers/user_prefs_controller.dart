@@ -41,7 +41,8 @@ class UserPrefs {
 }
 
 class UserPrefsNotifier extends Notifier<UserPrefs> {
-  static const _prefsKey = 'user_prefs_v1';
+  /// v2: migrates old 3-currency default to the wide Arab+world default.
+  static const _prefsKey = 'user_prefs_v2';
 
   @override
   UserPrefs build() {

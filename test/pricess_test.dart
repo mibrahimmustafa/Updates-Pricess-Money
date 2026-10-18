@@ -29,9 +29,9 @@ void main() {
       AppConstants.defaultVisibleMetals,
     );
 
-    // Toggle adds a currency and saves.
-    await c.read(userPrefsProvider.notifier).toggleCurrency('AED');
-    expect(c.read(userPrefsProvider).visibleCurrencies.contains('AED'), isTrue);
+    // Toggle adds a currency and saves ('BRL' is not in the defaults).
+    await c.read(userPrefsProvider.notifier).toggleCurrency('BRL');
+    expect(c.read(userPrefsProvider).visibleCurrencies.contains('BRL'), isTrue);
 
     // Protection: the list can never be emptied completely.
     for (final code in List.of(c.read(userPrefsProvider).visibleCurrencies)) {
@@ -50,7 +50,7 @@ void main() {
     expect(c.read(userPrefsProvider).visibleMetals, isNotEmpty);
 
     // Persistence: raw JSON is on disk.
-    final raw = await SharedPreferencesAsync().getString('user_prefs_v1');
+    final raw = await SharedPreferencesAsync().getString('user_prefs_v2');
     expect(raw, isNotNull);
     expect(raw!, contains('QAR'));
 

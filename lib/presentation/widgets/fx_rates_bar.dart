@@ -70,6 +70,13 @@ class FxRatesBar extends StatelessWidget {
                   child: Icon(Icons.east, size: 13, color: gold),
                 ),
                 TextSpan(text: '  '),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: Text(
+                    AppConstants.currencyFlag(currency),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
                 TextSpan(
                   text: currency,
                   style: theme.textTheme.labelLarge?.copyWith(

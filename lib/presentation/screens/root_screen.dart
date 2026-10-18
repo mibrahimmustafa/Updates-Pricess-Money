@@ -10,6 +10,7 @@ import 'converter_screen.dart';
 import 'home_screen.dart';
 import 'jewelry_calculator_screen.dart';
 import 'more_screen.dart';
+import 'settings_screen.dart';
 
 /// Bottom navigation shell: Prices / Jewelry / Calculator / More.
 /// Listens to every fresh snapshot and evaluates price alerts.
@@ -40,11 +41,13 @@ class _RootScreenState extends ConsumerState<RootScreen> {
       l.t('tab_prices'),
       l.t('tab_jewelry'),
       l.t('tab_converter'),
+      l.t('settings_title'),
       l.t('tab_more'),
     ];
 
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 16,
         title: Row(
           children: [
             if (_index == 0) ...[
@@ -84,6 +87,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           HomeScreen(),
           JewelryCalculatorScreen(showAppBar: false),
           ConverterScreen(showAppBar: false),
+          SettingsScreen(showAppBar: false),
           MoreScreen(showAppBar: false),
         ],
       ),
@@ -104,8 +108,12 @@ class _RootScreenState extends ConsumerState<RootScreen> {
             label: titles[2],
           ),
           NavigationDestination(
-            icon: const Icon(Icons.menu),
+            icon: const Icon(Icons.settings_outlined),
             label: titles[3],
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.menu),
+            label: titles[4],
           ),
         ],
       ),
