@@ -90,6 +90,10 @@ class AppL10n {
     'preset_gcc': 'GCC',
     'preset_mena': 'MENA',
     'preset_default': 'Reset',
+    'theme': 'Theme',
+    'theme_system': 'System',
+    'theme_light': 'Light',
+    'theme_dark': 'Dark',
   };
 
   static const Map<String, String> _ar = {
@@ -170,6 +174,10 @@ class AppL10n {
     'preset_gcc': 'الخليج',
     'preset_mena': 'الشرق الأوسط',
     'preset_default': 'استعادة الافتراضي',
+    'theme': 'المظهر',
+    'theme_system': 'النظام',
+    'theme_light': 'فاتح',
+    'theme_dark': 'داكن',
   };
 
   String t(String key) {

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
 import '../../core/l10n.dart';
 import '../controllers/locale_controller.dart';
+import '../controllers/theme_mode_controller.dart';
 import '../controllers/default_currency_controller.dart';
 import '../controllers/user_prefs_controller.dart';
 
@@ -51,6 +52,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onChanged: (_) => ref.read(localeProvider.notifier).toggle(),
             ),
           ),
+          const SizedBox(height: 8),
+          Text(l.t('theme'), style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          SegmentedButton<ThemeMode>(
+            segments: [
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text(l.t('theme_system')),
+                icon: Icon(Icons.brightness_auto, size: 16),
+              ),
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text(l.t('theme_light')),
+                icon: Icon(Icons.light_mode, size: 16),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                label: Text(l.t('theme_dark')),
+                icon: Icon(Icons.dark_mode, size: 16),
+              ),
+            ],
+            selected: {ref.watch(themeModeProvider)},
+            onSelectionChanged: (s) =>
+                ref.read(themeModeProvider.notifier).set(s.first),
+          ),
+          const SizedBox(height: 8),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.star_outline),
@@ -117,7 +144,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               for (final c in filtered)
                 FilterChip(
                   label: Text(
-                      '${AppConstants.currencySymbol(c)} $c'),
+                      '${AppConstants.currencyFlag(c)} $c · ${AppConstants.currencySymbol(c)}'),
                   selected: prefs.visibleCurrencies.contains(c),
                   onSelected: (_) =>
                       ref.read(userPrefsProvider.notifier).toggleCurrency(c),

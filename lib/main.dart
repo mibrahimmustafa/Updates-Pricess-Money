@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'presentation/controllers/locale_controller.dart';
+import 'presentation/controllers/theme_mode_controller.dart';
 import 'presentation/screens/root_screen.dart';
 import 'services/notifications_service.dart';
 
@@ -19,6 +20,8 @@ class PricessMoneyApp extends ConsumerWidget {
   static const goldSoft = Color(0xFFF6CD60);
   static const darkBg = Color(0xFF111111);
   static const cardBg = Color(0xFF1C1A14);
+  static const lightBg = Color(0xFFF7F4EC);
+  static const lightCard = Color(0xFFFFFDF7);
 
   ThemeData _darkTheme() {
     final base = ThemeData(
@@ -130,24 +133,128 @@ class PricessMoneyApp extends ConsumerWidget {
     );
   }
 
+  ThemeData _lightTheme() {
+    final goldDeep = const Color(0xFFB08820);
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      colorScheme: ColorScheme.light(
+        primary: goldDeep,
+        secondary: const Color(0xFF5C6B7A),
+        surface: lightCard,
+        onSurface: const Color(0xFF332D1E),
+        surfaceContainerHighest: const Color(0xFFF1ECDF),
+        error: const Color(0xFFC62828),
+      ),
+      scaffoldBackgroundColor: lightBg,
+    );
+
+    return base.copyWith(
+      appBarTheme: const AppBarTheme(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: lightBg,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF332D1E),
+          letterSpacing: 0.2,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: lightCard,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFE4DCC8)),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: const Color(0xFFF1ECDF),
+        indicatorColor: goldDeep.withValues(alpha: 0.22),
+        elevation: 0,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
+              color: states.contains(WidgetState.selected)
+                  ? goldDeep
+                  : const Color(0xFF8A8271),
+            )),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
+              fontSize: 12,
+              fontWeight: states.contains(WidgetState.selected)
+                  ? FontWeight.w700
+                  : FontWeight.w500,
+              color: states.contains(WidgetState.selected)
+                  ? goldDeep
+                  : const Color(0xFF8A8271),
+            )),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFFF1ECDF),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: goldDeep, width: 1.4),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          side: const WidgetStatePropertyAll(BorderSide(color: Color(0xFFE4DCC8))),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected)
+                ? goldDeep.withValues(alpha: 0.18)
+                : Colors.transparent,
+          ),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? lightCard : null,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? goldDeep : null,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: goldDeep,
+          foregroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: goldDeep,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      dividerTheme: const DividerThemeData(color: Color(0xFFE4DCC8), space: 1),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final langCode = ref.watch(localeProvider);
-
-    final light = ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.light(
-        primary: const Color(0xFFB58A2B),
-        secondary: const Color(0xFF5C6B7A),
-      ),
-    );
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp(
       title: 'Pricess Money',
       debugShowCheckedModeBanner: false,
-      theme: light,
+      theme: _lightTheme(),
       darkTheme: _darkTheme(),
-      themeMode: ThemeMode.dark,
+      themeMode: themeMode,
       locale: Locale(langCode),
       supportedLocales: const [Locale('en'), Locale('ar')],
       localizationsDelegates: const [

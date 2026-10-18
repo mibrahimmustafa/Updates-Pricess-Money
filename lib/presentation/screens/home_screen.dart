@@ -119,7 +119,7 @@ class _Header extends StatelessWidget {
       children: [
         Row(
           children: [
-            _LiveBadge(live: state.error == null, l: l),
+            _LiveBadge(state: state, l: l),
           ],
         ),
         if (state.error != null) ...[
@@ -151,14 +151,23 @@ class _Header extends StatelessWidget {
 }
 
 class _LiveBadge extends StatelessWidget {
-  const _LiveBadge({required this.live, required this.l});
+  const _LiveBadge({required this.state, required this.l});
 
-  final bool live;
+  final PricesState state;
   final AppL10n l;
 
   @override
   Widget build(BuildContext context) {
+    final live = state.error == null;
     final color = live ? const Color(0xFF66BB6A) : Colors.orangeAccent;
+    final latency = state.latencyMs;
+    final latencyColor = latency == null
+        ? color
+        : latency < 700
+            ? const Color(0xFF66BB6A)
+            : latency < 1600
+                ? const Color(0xFFFFB74D)
+                : const Color(0xFFE57373);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -183,6 +192,28 @@ class _LiveBadge extends StatelessWidget {
               color: color,
             ),
           ),
+          if (live && latency != null) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: latencyColor.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              // Forced LTR: "234 ms" never scrambles inside RTL text.
+              child: Text.rich(
+                TextSpan(
+                  text: '$latency ms',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: latencyColor,
+                  ),
+                ),
+                textDirection: TextDirection.ltr,
+              ),
+            ),
+          ],
         ],
       ),
     );

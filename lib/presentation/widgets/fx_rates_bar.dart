@@ -47,6 +47,7 @@ class FxRatesBar extends StatelessWidget {
   Widget _tile(String currency, double perUsd) {
     String digits(double v) =>
         v.toStringAsFixed(v > 100 ? 2 : (v > 10 ? 3 : 4));
+    final gold = theme.colorScheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
@@ -55,28 +56,34 @@ class FxRatesBar extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // Forced LTR: "1 USD → SAR" must keep its visual order in
+          // both directions; composing it inside RTL text scrambles it.
           Text.rich(
             TextSpan(
               style: theme.textTheme.labelLarge?.copyWith(
                 color: theme.colorScheme.secondary,
               ),
               children: [
-                TextSpan(
-                  text: '1 USD → ',
+                const TextSpan(text: '1 USD  '),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: Icon(Icons.east, size: 13, color: gold),
                 ),
+                TextSpan(text: '  '),
                 TextSpan(
                   text: currency,
                   style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.primary,
+                    color: gold,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
             ),
+            textDirection: TextDirection.ltr,
           ),
           const SizedBox(height: 4),
           Text(
-            '${AppConstants.currencySymbol(currency)} ${digits(perUsd)}',
+            '${digits(perUsd)} ${AppConstants.currencySymbol(currency)}',
             style: theme.textTheme.titleLarge
                 ?.copyWith(fontWeight: FontWeight.w800),
           ),

@@ -65,6 +65,21 @@ class AppConstants {
 
   static String currencySymbol(String code) => _symbols[code] ?? code;
 
+  /// Flag emoji for an ISO currency code (EUR→🇪🇺, USD→🇺🇸 …).
+  static String currencyFlag(String code) {
+    if (code == 'EUR') return '🇪🇺';
+    if (code == 'XAU' || code == 'XAG' || code == 'XPT' || code == 'XPD') {
+      return '🥇';
+    }
+    if (code == 'BTC') return '₿';
+    if (code == 'ETH') return 'Ξ';
+    if (code == 'HG') return '🔩';
+    final upper = code.toUpperCase();
+    final first = String.fromCharCode(0x1F1E6 + upper.codeUnitAt(0) - 65);
+    final second = String.fromCharCode(0x1F1E6 + upper.codeUnitAt(1) - 65);
+    return '$first$second';
+  }
+
   /// Currencies shown out of the box.
   static const defaultVisibleCurrencies = {usd, sar, egp};
 

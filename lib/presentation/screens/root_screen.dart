@@ -5,6 +5,7 @@ import '../../core/l10n.dart';
 import '../controllers/alerts_controller.dart';
 import '../controllers/locale_controller.dart';
 import '../controllers/prices_controller.dart';
+import '../widgets/app_bar_pills.dart';
 import 'converter_screen.dart';
 import 'home_screen.dart';
 import 'jewelry_calculator_screen.dart';
@@ -71,11 +72,10 @@ class _RootScreenState extends ConsumerState<RootScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: 'EN / AR',
-            onPressed: () => ref.read(localeProvider.notifier).toggle(),
-            icon: const Icon(Icons.translate),
-          ),
+          ThemePill(),
+          const SizedBox(width: 8),
+          LangPill(),
+          const SizedBox(width: 12),
         ],
       ),
       body: IndexedStack(

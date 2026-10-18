@@ -140,7 +140,7 @@ class MetalPriceCard extends StatelessWidget {
                 children: [
                   for (final c in currencies)
                     _row(
-                      '${l10n.t('gram')} — $c',
+                      '${l10n.t('gram')} · ${iso(c)}',
                       formatMoney(
                         rates.convertFromUsd(metal.pricePerGram, c),
                         c,
@@ -161,7 +161,7 @@ class MetalPriceCard extends StatelessWidget {
                     for (final k in AppConstants.karats.entries)
                       if (k.key != '24K')
                         _row(
-                          '${l10n.t('gram')} ${k.key} — ${currencies.last}',
+                          '${l10n.t('gram')} ${iso(k.key)} · ${iso(currencies.last)}',
                           formatMoney(
                             rates.convertFromUsd(
                               metal.pricePerGram * k.value,

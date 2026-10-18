@@ -1,12 +1,76 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
+import 'package:pricess_money/core/constants.dart';
 import 'package:pricess_money/core/utils.dart';
 import 'package:pricess_money/data/models/history_point.dart';
 import 'package:pricess_money/data/models/metal_price.dart';
 import 'package:pricess_money/data/models/exchange_rates.dart';
 import 'package:pricess_money/presentation/controllers/alerts_controller.dart';
+import 'package:pricess_money/presentation/controllers/user_prefs_controller.dart';
 
 void main() {
+  test('user prefs: toggle / preset / reset / persistence round-trip', () async {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.withData({});
+
+    // Fresh app start: defaults.
+    final c = ProviderContainer();
+    addTearDown(c.dispose);
+    expect(
+      c.read(userPrefsProvider).visibleCurrencies,
+      AppConstants.defaultVisibleCurrencies,
+    );
+    expect(
+      c.read(userPrefsProvider).visibleMetals,
+      AppConstants.defaultVisibleMetals,
+    );
+
+    // Toggle adds a currency and saves.
+    await c.read(userPrefsProvider.notifier).toggleCurrency('AED');
+    expect(c.read(userPrefsProvider).visibleCurrencies.contains('AED'), isTrue);
+
+    // Protection: the list can never be emptied completely.
+    for (final code in List.of(c.read(userPrefsProvider).visibleCurrencies)) {
+      await c.read(userPrefsProvider.notifier).toggleCurrency(code);
+    }
+    expect(c.read(userPrefsProvider).visibleCurrencies, isNotEmpty);
+
+    // Preset selects a group.
+    await c.read(userPrefsProvider.notifier).selectGroup(AppConstants.gccCurrencies);
+    expect(c.read(userPrefsProvider).visibleCurrencies, AppConstants.gccCurrencies);
+
+    // Metal toggle protection too.
+    for (final m in List.of(c.read(userPrefsProvider).visibleMetals)) {
+      await c.read(userPrefsProvider.notifier).toggleMetal(m);
+    }
+    expect(c.read(userPrefsProvider).visibleMetals, isNotEmpty);
+
+    // Persistence: raw JSON is on disk.
+    final raw = await SharedPreferencesAsync().getString('user_prefs_v1');
+    expect(raw, isNotNull);
+    expect(raw!, contains('QAR'));
+
+    // Second "app start" reads persisted state from storage.
+    final c2 = ProviderContainer();
+    addTearDown(c2.dispose);
+    for (var i = 0; i < 50; i++) {
+      await Future.delayed(const Duration(milliseconds: 10));
+      if (c2.read(userPrefsProvider).visibleCurrencies.length == 6) break;
+    }
+    expect(c2.read(userPrefsProvider).visibleCurrencies, AppConstants.gccCurrencies);
+
+    // Reset returns defaults.
+    await c2.read(userPrefsProvider.notifier).resetCurrencies();
+    expect(
+      c2.read(userPrefsProvider).visibleCurrencies,
+      AppConstants.defaultVisibleCurrencies,
+    );
+  });
+
   test('MetalPrice parses gold-api JSON', () {
     final m = MetalPrice.fromJson({
       'symbol': 'XAU',
@@ -38,10 +102,15 @@ void main() {
     expect(h.perGram, closeTo(220284 / 31.1034768, 0.01));
   });
 
-  test('formatMoney adds symbol and thousand separators', () {
-    expect(formatMoney(7141.724, 'EGP'), 'ج.م 7,141.72');
-    expect(formatMoney(3.75, 'SAR'), 'ر.س 3.750');
-    expect(formatMoney(10, 'USD'), r'$ 10.000');
+  test('formatMoney adds symbol and thousand separators, bidi-safe', () {
+    // digits first, directional isolates around the number
+    expect(formatMoney(7141.724, 'EGP'), '\u20667,141.72\u2069 ج.م');
+    expect(formatMoney(3.75, 'SAR'), '\u20663.750\u2069 ر.س');
+    expect(formatMoney(10, 'USD'), '\u206610.000\u2069 \$');
+    // isolates keep the digits LTR even inside Arabic text
+    final out = formatMoney(7141.724, 'EGP');
+    expect(out.startsWith('\u2066'), isTrue);
+    expect(out.contains('\u2069'), isTrue);
   });
 
   test('PriceAlert triggers above and below targets', () {

@@ -13,6 +13,7 @@ class PricesState {
     this.error,
     this.isLoading = false,
     this.isBackground = false,
+    this.latencyMs,
   });
 
   final PriceSnapshot? snapshot;
@@ -22,17 +23,23 @@ class PricesState {
   /// True while app is paused/lifecycle-hidden: polling is stopped.
   final bool isBackground;
 
+  /// Network round-trip time (ms) of the latest successful refresh —
+  /// shown next to the LIVE badge as a connection-quality indicator.
+  final int? latencyMs;
+
   PricesState copyWith({
     PriceSnapshot? snapshot,
     String? error,
     bool? isLoading,
     bool? isBackground,
+    int? latencyMs,
   }) {
     return PricesState(
       snapshot: snapshot ?? this.snapshot,
       error: error,
       isLoading: isLoading ?? this.isLoading,
       isBackground: isBackground ?? this.isBackground,
+      latencyMs: latencyMs ?? this.latencyMs,
     );
   }
 }
@@ -81,13 +88,16 @@ class PricesNotifier extends Notifier<PricesState> with WidgetsBindingObserver {
 
   Future<void> refresh() async {
     state = state.copyWith(isLoading: true, error: null);
+    final watch = Stopwatch()..start();
     try {
       final snapshot = await ref.read(priceRepositoryProvider).fetchSnapshot();
+      watch.stop();
       await ref.read(priceRepositoryProvider).saveCached(snapshot);
       state = state.copyWith(
         snapshot: snapshot,
         isLoading: false,
         error: null,
+        latencyMs: watch.elapsedMilliseconds,
       );
     } catch (e) {
       state = state.copyWith(
