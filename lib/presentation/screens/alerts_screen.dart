@@ -85,7 +85,8 @@ class _AddAlertDialog extends ConsumerStatefulWidget {
 }
 
 class _AddAlertDialogState extends ConsumerState<_AddAlertDialog> {
-  String _metal = AppConstants.goldSymbol;
+  String? _metal;
+  String? _currency;
   bool _above = true;
   final _targetCtrl = TextEditingController();
 
@@ -98,7 +99,10 @@ class _AddAlertDialogState extends ConsumerState<_AddAlertDialog> {
   @override
   Widget build(BuildContext context) {
     final l = AppL10n(ref.watch(localeProvider));
-    final currency = ref.watch(defaultCurrencyProvider);
+    final prefs = ref.watch(userPrefsProvider);
+    final defaultQuote = ref.watch(defaultCurrencyProvider);
+    _currency ??= defaultQuote;
+    _metal ??= prefs.metalList.isNotEmpty ? prefs.metalList.first : AppConstants.goldSymbol;
 
     return AlertDialog(
       title: Text(l.t('add_alert')),
@@ -112,7 +116,7 @@ class _AddAlertDialogState extends ConsumerState<_AddAlertDialog> {
               border: const OutlineInputBorder(),
             ),
             items: [
-              for (final s in ref.watch(userPrefsProvider).metalList)
+              for (final s in prefs.metalList)
                 DropdownMenuItem(
                   value: s,
                   child: Text(
@@ -127,13 +131,29 @@ class _AddAlertDialogState extends ConsumerState<_AddAlertDialog> {
             onChanged: (v) => setState(() => _metal = v!),
           ),
           const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _currency,
+            decoration: InputDecoration(
+              labelText: l.t('currency'),
+              border: const OutlineInputBorder(),
+            ),
+            items: [
+              for (final c in prefs.currencyList)
+                DropdownMenuItem(
+                  value: c,
+                  child: Text('${AppConstants.currencySymbol(c)} $c'),
+                ),
+            ],
+            onChanged: (v) => setState(() => _currency = v!),
+          ),
+          const SizedBox(height: 12),
           TextField(
             controller: _targetCtrl,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: l.t('target_price'),
               border: const OutlineInputBorder(),
-              suffixText: currency,
+              suffixText: _currency,
             ),
           ),
           const SizedBox(height: 12),
@@ -158,8 +178,8 @@ class _AddAlertDialogState extends ConsumerState<_AddAlertDialog> {
             if (t == null || t <= 0) return;
             ref.read(alertsProvider.notifier).addAlert(PriceAlert(
                   id: DateTime.now().microsecondsSinceEpoch.toString(),
-                  metalSymbol: _metal,
-                  currency: currency,
+                  metalSymbol: _metal!,
+                  currency: _currency!,
                   targetPerGram: t,
                   above: _above,
                   active: true,

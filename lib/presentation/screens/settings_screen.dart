@@ -7,15 +7,34 @@ import '../controllers/locale_controller.dart';
 import '../controllers/default_currency_controller.dart';
 import '../controllers/user_prefs_controller.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  final _searchCtrl = TextEditingController();
+  String _filter = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l = AppL10n(ref.watch(localeProvider));
     final langCode = ref.watch(localeProvider);
     final currency = ref.watch(defaultCurrencyProvider);
     final prefs = ref.watch(userPrefsProvider);
+    final theme = Theme.of(context);
+
+    final filtered = AppConstants.currencyCodes
+        .where((c) => _filter.isEmpty || c.contains(_filter.toUpperCase()))
+        .toList();
 
     return Scaffold(
       appBar: AppBar(title: Text(l.t('settings_title'))),
@@ -34,9 +53,10 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.currency_exchange),
+            leading: const Icon(Icons.star_outline),
             title: Text(l.t('default_currency')),
-            subtitle: Text(currency),
+            subtitle: Text(
+                '${AppConstants.currencySymbol(currency)} $currency'),
           ),
           SegmentedButton<String>(
             segments: [
@@ -50,13 +70,51 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
           Text(l.t('choose_currencies'),
-              style: Theme.of(context).textTheme.titleSmall),
+              style: theme.textTheme.titleSmall),
+          Text(
+            '${prefs.visibleCurrencies.length} / ${AppConstants.currencyCodes.length}',
+            style: theme.textTheme.labelSmall
+                ?.copyWith(color: theme.colorScheme.secondary),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _searchCtrl,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: 'SAR, EUR, AED…',
+            ),
+            onChanged: (v) => setState(() => _filter = v.trim()),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            children: [
+              ActionChip(
+                label: Text(l.t('preset_gcc')),
+                onPressed: () => ref
+                    .read(userPrefsProvider.notifier)
+                    .selectGroup(AppConstants.gccCurrencies),
+              ),
+              ActionChip(
+                label: Text(l.t('preset_mena')),
+                onPressed: () => ref
+                    .read(userPrefsProvider.notifier)
+                    .selectGroup(AppConstants.menaCurrencies),
+              ),
+              ActionChip(
+                label: Text(l.t('preset_default')),
+                onPressed: () => ref
+                    .read(userPrefsProvider.notifier)
+                    .resetCurrencies(),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (final c in AppConstants.currencyPool.keys)
+              for (final c in filtered)
                 FilterChip(
                   label: Text(
                       '${AppConstants.currencySymbol(c)} $c'),
@@ -68,8 +126,19 @@ class SettingsScreen extends ConsumerWidget {
           ),
 
           const SizedBox(height: 24),
-          Text(l.t('choose_assets'),
-              style: Theme.of(context).textTheme.titleSmall),
+          Row(
+            children: [
+              Text(l.t('choose_assets'),
+                  style: theme.textTheme.titleSmall),
+              const Spacer(),
+              ActionChip(
+                label: Text(l.t('preset_default')),
+                onPressed: () => ref
+                    .read(userPrefsProvider.notifier)
+                    .resetMetals(),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,

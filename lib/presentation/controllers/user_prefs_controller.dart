@@ -22,7 +22,7 @@ class UserPrefs {
 
   /// Ordered currency list (pool order, filtered by visibility).
   List<String> get currencyList =>
-      AppConstants.currencyPool.keys
+      AppConstants.currencyCodes
           .where(visibleCurrencies.contains)
           .toList();
 
@@ -57,7 +57,7 @@ class UserPrefsNotifier extends Notifier<UserPrefs> {
       final j = jsonDecode(raw) as Map<String, dynamic>;
       final currencies = (j['currencies'] as List)
           .cast<String>()
-          .where(AppConstants.currencyPool.containsKey)
+          .where(AppConstants.currencyCodes.contains)
           .toSet();
       final metals = (j['metals'] as List)
           .cast<String>()
@@ -92,6 +92,27 @@ class UserPrefsNotifier extends Notifier<UserPrefs> {
     if (!set.remove(symbol)) set.add(symbol);
     if (set.isEmpty) return; // must show at least one asset
     state = state.copyWith(visibleMetals: set);
+    await _save();
+  }
+
+  Future<void> selectGroup(Set<String> codes) async {
+    state = state.copyWith(
+      visibleCurrencies: codes.intersection(AppConstants.currencyCodes),
+    );
+    await _save();
+  }
+
+  Future<void> resetCurrencies() async {
+    state = state.copyWith(
+      visibleCurrencies: AppConstants.defaultVisibleCurrencies,
+    );
+    await _save();
+  }
+
+  Future<void> resetMetals() async {
+    state = state.copyWith(
+      visibleMetals: AppConstants.defaultVisibleMetals,
+    );
     await _save();
   }
 }

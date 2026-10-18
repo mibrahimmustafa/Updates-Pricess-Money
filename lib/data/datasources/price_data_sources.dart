@@ -55,7 +55,7 @@ class FrankfurterDataSource {
   /// `GET /rates?base=USD&quotes=SAR,EGP,EUR,...`
   /// Frankfurter v2 returns an **array** of `{date, base, quote, rate}`.
   Future<ExchangeRates> getUsdRates({List<String>? quotes}) async {
-    final list = quotes ?? AppConstants.currencyPool.keys.toList();
+    final list = quotes ?? AppConstants.currencyCodes.toList();
     final res = await _dio.get<List<dynamic>>(
       '/rates',
       queryParameters: {

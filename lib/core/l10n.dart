@@ -87,6 +87,9 @@ class AppL10n {
     'language': 'Language',
     'choose_currencies': 'Currencies shown',
     'choose_assets': 'Assets shown',
+    'preset_gcc': 'GCC',
+    'preset_mena': 'MENA',
+    'preset_default': 'Reset',
   };
 
   static const Map<String, String> _ar = {
@@ -164,6 +167,9 @@ class AppL10n {
     'language': 'اللغة',
     'choose_currencies': 'العملات المعروضة',
     'choose_assets': 'الأصول المعروضة',
+    'preset_gcc': 'الخليج',
+    'preset_mena': 'الشرق الأوسط',
+    'preset_default': 'استعادة الافتراضي',
   };
 
   String t(String key) {

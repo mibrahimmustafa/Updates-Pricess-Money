@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants.dart';
 import '../../core/l10n.dart';
 import '../../core/utils.dart';
 import '../controllers/locale_controller.dart';
@@ -36,14 +35,7 @@ class BanksScreen extends ConsumerWidget {
           final sourceDate = points.isEmpty ? null : points.first.date;
           double? market(String c) {
             if (snapshot == null) return null;
-            switch (c) {
-              case AppConstants.egp:
-                return snapshot.rates.usdToEgp;
-              case AppConstants.sar:
-                return snapshot.rates.usdToSar;
-              default:
-                return null;
-            }
+            return snapshot.rates.usdTo(c);
           }
 
           return ListView(
