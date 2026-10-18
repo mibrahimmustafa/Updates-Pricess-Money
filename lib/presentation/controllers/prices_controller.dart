@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
+import '../../data/models/history_point.dart';
 import '../../data/repositories/price_repository.dart';
 
 class PricesState {
@@ -38,6 +39,12 @@ class PricesState {
 
 final priceRepositoryProvider = Provider<PriceRepository>((ref) {
   return PriceRepository();
+});
+
+/// CBE official USD-based rates (Central Bank of Egypt).
+final cbeRatesProvider =
+    FutureProvider.autoDispose<List<HistoryPoint>>((ref) {
+  return ref.read(priceRepositoryProvider).fetchCbeRates();
 });
 
 final pricesProvider = NotifierProvider.autoDispose<PricesNotifier, PricesState>(

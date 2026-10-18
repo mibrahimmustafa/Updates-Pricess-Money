@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
 import '../../core/l10n.dart';
 import '../controllers/locale_controller.dart';
+import '../controllers/user_prefs_controller.dart';
 import '../widgets/history_chart.dart';
 
 class ChartScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,12 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
     final theme = Theme.of(context);
     final query = HistoryQuery(symbol: _symbol, quote: _quote, days: _days);
     final history = ref.watch(historyProvider(query));
+    final prefs = ref.watch(userPrefsProvider);
+
+    final symbols = prefs.metalList;
+    final quotes = prefs.currencyList;
+    if (!symbols.contains(_symbol) && symbols.isNotEmpty) _symbol = symbols.first;
+    if (!quotes.contains(_quote) && quotes.isNotEmpty) _quote = quotes.first;
 
     return Scaffold(
       appBar: AppBar(title: Text(l.t('tab_chart'))),
@@ -40,14 +47,11 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                     border: const OutlineInputBorder(),
                   ),
                   items: [
-                    DropdownMenuItem(
-                      value: AppConstants.goldSymbol,
-                      child: Text(l.t('gold')),
-                    ),
-                    DropdownMenuItem(
-                      value: AppConstants.silverSymbol,
-                      child: Text(l.t('silver')),
-                    ),
+                    for (final s in symbols)
+                      DropdownMenuItem(
+                        value: s,
+                        child: Text(AppConstants.metalPool[s] ?? s),
+                      ),
                   ],
                   onChanged: (v) => setState(() => _symbol = v!),
                 ),
@@ -60,10 +64,9 @@ class _ChartScreenState extends ConsumerState<ChartScreen> {
                     labelText: l.t('currency'),
                     border: const OutlineInputBorder(),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: AppConstants.usd, child: Text('USD')),
-                    DropdownMenuItem(value: AppConstants.sar, child: Text('SAR')),
-                    DropdownMenuItem(value: AppConstants.egp, child: Text('EGP')),
+                  items: [
+                    for (final c in quotes)
+                      DropdownMenuItem(value: c, child: Text(c)),
                   ],
                   onChanged: (v) => setState(() => _quote = v!),
                 ),

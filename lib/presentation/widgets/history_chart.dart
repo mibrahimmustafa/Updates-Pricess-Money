@@ -38,6 +38,42 @@ final historyProvider =
       ),
 );
 
+/// Explicit date-range history query (used by the time machine).
+class HistoryQuery2 {
+  const HistoryQuery2({
+    required this.symbol,
+    required this.quote,
+    required this.from,
+    required this.to,
+  });
+
+  final String symbol;
+  final String quote;
+  final DateTime from;
+  final DateTime to;
+
+  @override
+  bool operator ==(Object other) =>
+      other is HistoryQuery2 &&
+      other.symbol == symbol &&
+      other.quote == quote &&
+      other.from == from &&
+      other.to == to;
+
+  @override
+  int get hashCode => Object.hash(symbol, quote, from, to);
+}
+
+final historyRangeProvider =
+    FutureProvider.autoDispose.family<List<HistoryPoint>, HistoryQuery2>(
+  (ref, q) => ref.read(priceRepositoryProvider).fetchHistoryRange(
+        q.symbol,
+        q.quote,
+        q.from,
+        q.to,
+      ),
+);
+
 /// Line chart of per-gram metal price history.
 class HistoryChart extends ConsumerWidget {
   const HistoryChart({super.key, required this.points, required this.quote});

@@ -16,12 +16,16 @@ class MetalPriceCard extends StatelessWidget {
     required this.theme,
     required this.l10n,
     this.showKarats = false,
+    required this.currencies,
   });
 
   final MetalPrice metal;
   final ExchangeRates rates;
   final ThemeData theme;
   final AppL10n l10n;
+
+  /// User-selected display currencies (drives the per-gram rows).
+  final List<String> currencies;
 
   /// Karat breakdown only makes sense for gold.
   final bool showKarats;
@@ -49,94 +53,126 @@ class MetalPriceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final goldColor = theme.colorScheme.primary;
+    final isGold = metal.symbol == AppConstants.goldSymbol;
+    final isSilver = metal.symbol == AppConstants.silverSymbol;
+    final accent = isGold
+        ? goldColor
+        : isSilver
+            ? const Color(0xFFB7C0CC)
+            : const Color(0xFF9BA8B5);
+    final isGramMetal = AppConstants.gramMetals.contains(metal.symbol);
+    final label = isGold
+        ? l10n.t('gold')
+        : isSilver
+            ? l10n.t('silver')
+            : AppConstants.metalPool[metal.symbol] ?? metal.name;
+    final icon = isGold
+        ? Icons.currency_pound
+        : isSilver
+            ? Icons.currency_exchange
+            : Icons.paid;
 
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFF2C2820)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: goldColor.withValues(alpha: 0.15),
-                  child: Icon(
-                    showKarats ? Icons.currency_pound : Icons.currency_exchange,
-                    color: goldColor,
-                    size: 20,
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(21),
                   ),
+                  child: Icon(icon, color: accent, size: 24),
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  l10n.t(metal.symbol == AppConstants.goldSymbol
-                      ? 'gold'
-                      : 'silver'),
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      metal.symbol,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.secondary,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
                 ),
                 const Spacer(),
                 Text(
-                  '${l10n.t('per_oz')}: ${formatMoney(metal.price, AppConstants.usd)}',
+                  formatMoney(metal.price, AppConstants.usd),
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     color: goldColor,
                   ),
                 ),
-              ],
-            ),
-            const Divider(height: 20),
-            Table(
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              columnWidths: const {
-                0: IntrinsicColumnWidth(),
-                1: FlexColumnWidth(),
-              },
-              children: [
-                _row(
-                  '${l10n.t('gram')} — ${AppConstants.usd}',
-                  formatMoney(metal.pricePerGram, AppConstants.usd),
-                ),
-                _row(
-                  '${l10n.t('gram')} — ${AppConstants.sar}',
-                  formatMoney(
-                    rates.convertFromUsd(metal.pricePerGram, AppConstants.sar),
-                    AppConstants.sar,
-                  ),
-                ),
-                _row(
-                  '${l10n.t('gram')} — ${AppConstants.egp}',
-                  formatMoney(
-                    rates.convertFromUsd(metal.pricePerGram, AppConstants.egp),
-                    AppConstants.egp,
+                const SizedBox(width: 4),
+                Text(
+                  metal.symbol == 'BTC' ? '' : l10n.t('per_oz'),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.secondary,
                   ),
                 ),
               ],
             ),
-            if (showKarats) ...[
-              const SizedBox(height: 8),
-              const Divider(height: 12),
+            if (isGramMetal) ...[
+              const Divider(height: 20),
               Table(
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                 columnWidths: const {
                   0: IntrinsicColumnWidth(),
                   1: FlexColumnWidth(),
                 },
                 children: [
-                  for (final k in AppConstants.karats.entries)
+                  for (final c in currencies)
                     _row(
-                      '${l10n.t('gram')} ${k.key} — ${AppConstants.egp}',
+                      '${l10n.t('gram')} — $c',
                       formatMoney(
-                        rates.convertFromUsd(
-                          metal.pricePerGram * k.value,
-                          AppConstants.egp,
-                        ),
-                        AppConstants.egp,
+                        rates.convertFromUsd(metal.pricePerGram, c),
+                        c,
                       ),
                     ),
                 ],
               ),
+              if (showKarats) ...[
+                const SizedBox(height: 8),
+                const Divider(height: 12),
+                Table(
+                  columnWidths: const {
+                    0: IntrinsicColumnWidth(),
+                    1: FlexColumnWidth(),
+                  },
+                  children: [
+                    // 24K equals the pure spot gram row above — skipped.
+                    for (final k in AppConstants.karats.entries)
+                      if (k.key != '24K')
+                        _row(
+                          '${l10n.t('gram')} ${k.key} — ${currencies.last}',
+                          formatMoney(
+                            rates.convertFromUsd(
+                              metal.pricePerGram * k.value,
+                              currencies.last,
+                            ),
+                            currencies.last,
+                          ),
+                        ),
+                  ],
+                ),
+              ],
             ],
           ],
         ),

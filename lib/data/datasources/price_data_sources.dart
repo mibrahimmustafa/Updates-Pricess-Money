@@ -51,61 +51,38 @@ class FrankfurterDataSource {
 
   final Dio _dio;
 
-  /// Fetches `GET /rates?base=USD&quotes=SAR,EGP`.
-  ///
-  /// Frankfurter v2 returns an **array** of `{date, base, quote, rate}`
-  /// objects (some deployments may still return a legacy map), so handle
-  /// both shapes defensively.
-  Future<ExchangeRates> getUsdRates() async {
-    final res = await _dio.get<dynamic>(
+  /// Fetches USD → all requested pool currency rates:
+  /// `GET /rates?base=USD&quotes=SAR,EGP,EUR,...`
+  /// Frankfurter v2 returns an **array** of `{date, base, quote, rate}`.
+  Future<ExchangeRates> getUsdRates({List<String>? quotes}) async {
+    final list = quotes ?? AppConstants.currencyPool.keys.toList();
+    final res = await _dio.get<List<dynamic>>(
       '/rates',
       queryParameters: {
         'base': AppConstants.usd,
-        'quotes': '${AppConstants.sar},${AppConstants.egp}',
+        'quotes': list.join(','),
       },
     );
 
-    double? sar;
-    double? egp;
+    final rates = <String, double>{AppConstants.usd: 1.0};
     DateTime? date;
 
-    void readRate(Map<String, dynamic> entry) {
-      final quote = entry['quote'] as String?;
-      final rate = (entry['rate'] as num?)?.toDouble();
-      if (quote == null || rate == null) return;
-      final entryDate = entry['date'] is String
-          ? DateTime.parse(entry['date'] as String)
-          : null;
-      date ??= entryDate;
-      if (quote == AppConstants.sar) sar = rate;
-      if (quote == AppConstants.egp) egp = rate;
+    for (final entry in (res.data ?? []).cast<Map>()) {
+      final map = entry.cast<String, dynamic>();
+      final quote = map['quote'] as String?;
+      final rate = (map['rate'] as num?)?.toDouble();
+      if (quote == null || rate == null) continue;
+      rates[quote] = rate;
+      date ??=
+          map['date'] is String ? DateTime.parse(map['date'] as String) : null;
     }
 
-    final data = res.data;
-    if (data is List) {
-      for (final entry in data) {
-        readRate((entry as Map).cast<String, dynamic>());
-      }
-    } else if (data is Map) {
-      final map = data.cast<String, dynamic>();
-      final rates = map['rates'];
-      if (rates is Map) {
-        for (final e in rates.entries) {
-          readRate({
-            'quote': e.key,
-            'rate': e.value,
-            'date': map['date'],
-          });
-        }
-      }
-    }
-
-    if (sar == null || egp == null) {
+    if (rates[AppConstants.sar] == null ||
+        rates[AppConstants.egp] == null) {
       throw StateError('Frankfurter response missing SAR/EGP rates');
     }
     return ExchangeRates(
-      usdToSar: sar!,
-      usdToEgp: egp!,
+      usdRates: rates,
       date: date ?? DateTime.now(),
     );
   }
@@ -118,15 +95,28 @@ class FrankfurterDataSource {
     required String symbol,
     required String quote,
     required int days,
+  }) =>
+      getMetalHistoryRange(
+        symbol: symbol,
+        quote: quote,
+        from: DateTime.now().subtract(Duration(days: days)),
+        to: DateTime.now(),
+      );
+
+  /// Historical daily rates for an explicit date range (inclusive).
+  Future<List<HistoryPoint>> getMetalHistoryRange({
+    required String symbol,
+    required String quote,
+    required DateTime from,
+    DateTime? to,
   }) async {
-    final from = DateTime.now().subtract(Duration(days: days));
     final res = await _dio.get<List<dynamic>>(
       '/rates',
       queryParameters: {
         'base': symbol,
         'quotes': quote,
-        'from': '${from.year}-${from.month.toString().padLeft(2, '0')}-'
-            '${from.day.toString().padLeft(2, '0')}',
+        'from': _isoDate(from),
+        if (to != null) 'to': _isoDate(to),
       },
     );
     final points = (res.data ?? [])
@@ -136,4 +126,57 @@ class FrankfurterDataSource {
     points.sort((a, b) => a.date.compareTo(b.date));
     return points;
   }
+
+  /// Central Bank of Egypt official daily rates (base USD).
+  ///
+  /// `GET /providers/cbe/rates?base=USD` returns entries like
+  /// `{"date":"2026-10-15","base":"USD","quote":"EGP","rate":53.4614}`.
+  Future<List<HistoryPoint>> getCbeUsdRates() async {
+    final res = await _dio.get<List<dynamic>>(
+      '/providers/cbe/rates',
+      queryParameters: {'base': AppConstants.usd},
+    );
+    final points = (res.data ?? [])
+        .cast<Map>()
+        .map((e) => HistoryPoint.fromJson(e.cast<String, dynamic>()))
+        .toList();
+    points.sort((a, b) => (a.quote ?? '').compareTo(b.quote ?? ''));
+    return points;
+  }
+
+  /// One fetch: rates of [base] against many [quotes], for the FX converter.
+  /// Accepts both Frankfurter v2 array rows and legacy map formats.
+  Future<Map<String, double>> getFxFamily({
+    required String base,
+    required List<String> quotes,
+  }) async {
+    final res = await _dio.get<dynamic>(
+      '/rates',
+      queryParameters: {'base': base, 'quotes': quotes.join(',')},
+    );
+    final out = <String, double>{};
+
+    void read(Map<String, dynamic> e) {
+      final q = e['quote'] as String?;
+      final r = (e['rate'] as num?)?.toDouble();
+      if (q != null && r != null) out[q] = r;
+    }
+
+    final data = res.data;
+    if (data is List) {
+      for (final e in data) {
+        read((e as Map).cast<String, dynamic>());
+      }
+    } else if (data is Map && data['rates'] is Map) {
+      ((data['rates'] as Map).cast<String, dynamic>()).forEach((q, v) {
+        final r = (v as num?)?.toDouble();
+        if (r != null) out[q] = r;
+      });
+    }
+    return out;
+  }
+
+  static String _isoDate(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
 }

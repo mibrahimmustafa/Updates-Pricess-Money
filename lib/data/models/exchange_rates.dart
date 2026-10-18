@@ -1,27 +1,36 @@
 import '../../core/constants.dart';
 
-/// Result of fetching USD-based FX rates from Frankfurter.
+/// USD-based FX rates for the whole currency pool (from Frankfurter).
 class ExchangeRates {
-  const ExchangeRates({
-    required this.usdToSar,
-    required this.usdToEgp,
-    required this.date,
-  });
+  const ExchangeRates({required this.usdRates, required this.date});
 
-  final double usdToSar;
-  final double usdToEgp;
-
-  /// Snapshot date reported by the API (FX updates daily).
+  /// Map of quote currency code → "USD buys X of quote".
+  final Map<String, double> usdRates;
   final DateTime date;
 
-  double convertFromUsd(double usdAmount, String target) {
-    switch (target) {
-      case AppConstants.sar:
-        return usdAmount * usdToSar;
-      case AppConstants.egp:
-        return usdAmount * usdToEgp;
-      default:
-        return usdAmount;
-    }
+  double usdTo(String code) => usdRates[code] ?? 1.0;
+
+  double get usdToSar => usdTo(AppConstants.sar);
+  double get usdToEgp => usdTo(AppConstants.egp);
+
+  double convertFromUsd(double usdAmount, String target) =>
+      usdAmount * usdTo(target);
+
+  /// Converts between any two pool currencies through USD.
+  double convert(double amount, String from, String to) =>
+      amount / usdTo(from) * usdTo(to);
+
+  Map<String, dynamic> toJson() => {
+        'rates': usdRates,
+        'date': date.toIso8601String(),
+      };
+
+  factory ExchangeRates.fromJson(Map<String, dynamic> json) {
+    return ExchangeRates(
+      usdRates: (json['rates'] as Map)
+          .cast<String, dynamic>()
+          .map((k, v) => MapEntry(k, (v as num).toDouble())),
+      date: DateTime.parse(json['date'] as String),
+    );
   }
 }
