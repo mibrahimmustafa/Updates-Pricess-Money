@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "product": {
+    "name": "Pricess Money Web",
+    "ArabicName": "بريسيس موني — ويب",
+    "type": "PWA / SPA",
+    "tagline": "Live precious metal & currency rates — no signup, no keys",
+    "languages": ["ar (RTL, default)", "en (LTR)"],
+    "theming": ["dark (gold identity)", "light (matched)", "system"]
+  },
+  "stack": {
+    "framework": "React 19 + TypeScript (strict)",
+    "bundler": "Vite",
+    "stateManagement": "Zustand (single store, slice-shape: prefs / live data / alerts / toasts)",
+    "charts": "Recharts",
+    "styling": "Hand-crafted CSS design tokens (no framework) — logical properties, RTL-first",
+    "fonts": { "arabic": "Cairo", "latin": "Inter" },
+    "testing": { "unit": "Vitest", "e2e": "Playwright (roadmap)" },
+    "deployment": "Static hosting (Vercel / Netlify / GitHub Pages)"
+  },
+  "dataFeeds": {
+    "metalsSpot": {
+      "provider": "api.gold-api.com",
+      "endpoint": "GET /price/{XAU|XAG|XPT|XPD|HG|BTC|ETH}",
+      "unit": "USD per troy ounce",
+      "grace": "cache ~30s → client polls exactly 30s, pauses on document.hidden",
+      "resilience": "per-symbol try/catch so one flaky feed can't kill the snapshot"
+    },
+    "fxRates": {
+      "provider": "api.frankfurter.dev",
+      "endpoint": "v2/rates?base=USD&quotes=<48 pool codes>",
+      "shape": "JSON array → reduced to {quote: rate} with USD:1 hub"
+    },
+    "fxHistory": {
+      "provider": "api.frankfurter.dev",
+      "endpoint": "v1/{start}..{end}?base=USD&quotes=<quote>",
+      "notes": "full daily history since 2015 for most majors; EGP has later start (CBE feed limitation)",
+      "metalDisclaimer": "metals have NO free historical endpoint → charts & time-machine are currency-only",
+      "decision": "honest UI note instead of fabricated data"
+    },
+    "cbeRates": {
+      "provider": "api.frankfurter.dev",
+      "endpoint": "v2/providers/cbe/rates?base=USD",
+      "usage": "Central Bank of Egypt official vs live market comparison with % deviation chip"
+    }
+  },
+  "networkPolicy": {
+    "strategy": "stale-while-revalidate",
+    "cache": "localStorage key price_snapshot_v2 (full snapshot JSON)",
+    "timeout": "12s AbortController per request",
+    "latencyBadge": "Stopwatch-measured ms of latest successful refresh, color-coded <700/<1600",
+    "errorHandling": "global error banner + retry; user never sees raw errors"
+  },
+  "domainModel": {
+    "primaryEntities": [
+      "PriceSnapshot { metals: Record<symbol, usdPerOz>, usdRates: Record<code, rate>, ts }",
+      "PriceAlert { id, metal, currency, target(perGram), above, active, firedAt }",
+      "Prefs { currencies[18..48], metals[2..7], defaultQuote, lang, theme }",
+      "Toast { id, text, kind }"
+    ],
+    "identityConstants": {
+      "GRAMS_PER_TROY_OZ": 31.1034768,
+      "VAT_RATE": 0.14,
+      "pollIntervalMs": 30000
+    }
+  },
+  "uiArchitecture": {
+    "navigation": {
+      "mobile": "5-tab bottom bar: Prices / Jewelry / Converter / Settings / More",
+      "desktop": ">=1024px switches to right-aligned sidebar (RTL aware)",
+      "stack": "More → Chart / TimeMachine / Banks pushed as overlay with animated back pill"
+    },
+    "screens": [
+      { "name": "Home", "composition": ["LiveBadge+latency", "Updated", "ErrorBanner", "FxBar", "MetalCard×visible (karat rows for XAU)"] },
+      { "name": "Converter", "composition": ["unified asset dropdown (metals+currencies)", "amount input + quick chips", "results table for every visible currency"] },
+      { "name": "Jewelry", "composition": ["weight/karat/mfg-fee inputs", "VAT toggle (14%)", "moyaval(old-gold) credit at spot purity", "live gram price + itemized total"] },
+      { "name": "Settings", "composition": ["lang switch", "theme segmented (system/light/dark)", "default-quote chips", "48-currency picker with search + GCC/MENA/reset presets + counter", "7-asset picker", "anti-empty protection"] },
+      { "name": "More", "composition": ["menu cards → Chart / TimeMachine / Banks"] },
+      { "name": "Chart", "composition": ["Recharts gold-gradient area chart", "1w..1y ranges", "min/max/change stats", "metals disclaimer"] },
+      { "name": "TimeMachine", "composition": ["per-year USD purchasing table since 2015", "Δ% chips vs today"] },
+      { "name": "Banks", "composition": ["CBE official vs live rows", "deviation chips"] },
+      { "name": "Alerts", "composition": ["progress bars toward target", "pause/resume/delete", "one-shot firing with toast + auto-pause"] }
+    ],
+    "microInteractions": [
+      "count-up + green/red flash animation on every price change (requestAnimationFrame easing)",
+      "pulse-ring LIVE dot; latency chip color transitions",
+      "card hover lift with gold glow border; staggered fadeUp entrances",
+      "logo rotate-on-hover; chip pop keyframe on selection; bottom-nav icon spring on tab change",
+      "pill theme icon 360° spin; toast slide-in/slide-out",
+      "skeleton shimmer while first load; focus rings on all inputs"
+    ],
+    "rtlI18n": {
+      "dirSwitching": "document.documentElement.dir flips with locale; all CSS uses logical properties",
+      "bidiSafety": "every Latin/number token rendered inside <span class='lnum'> (dir isolates) — prevents the mixed-text scrambling bug",
+      "l10n": "single dictionary ~90 keys, {var} interpolation, data-driven from core/l10n.ts"
+    }
+  },
+  "persistence": {
+    "pm_prefs_v2": "Prefs JSON (validated on load, falls back to defaults)",
+    "pm_alerts_v1": "PriceAlert[] JSON",
+    "price_snapshot_v2": "PriceSnapshot JSON (SWR cache)"
+  },
+  "testing": {
+    "unit": [
+      "convert() hub math + identity + NaN on unknown",
+      "moneyParts() precision tiers & symbol mapping",
+      "flag derivation & pool consistency of default set",
+      "latency thresholds & timeAgo branches",
+      "store: defaults, toggle, anti-empty, default-quote rotation, GCC preset",
+      "store: alert fires once, auto-pauses, does not refire; no false positive"
+    ],
+    "manual": "real-API smoke (metals + 48 fx + CBE + history) after build"
+  },
+  "performanceBudget": {
+    "firstContentfulPaint": "< 1.8s on Fast 3G",
+    "bundle": "route-less SPA, single chunk < ~350KB gz incl. Recharts",
+    "render": "no layout thrash — price updates via text content only"
+  },
+  "accessibility": {
+    "contrast": "≥ 4.5:1 in both themes",
+    "keyboard": "full tab order, Esc/backdrop closes dialog, focus-visible rings",
+    "aria": "aria-live for toasts, aria-label on icon-only controls, role=dialog",
+    "motion": "prefers-reduced-motion could disable shimmer/transitions (roadmap hook)"
+  },
+  "security": {
+    "noAuth": "no PII stored — pure public market data",
+    "transport": "HTTPS-only APIs, CSP-ready static build"
+  },
+  "repository": {
+    "path": "pricess_money/site",
+    "commands": {
+      "dev": "npm run dev",
+      "build": "npm run build",
+      "preview": "npm run preview",
+      "test": "npm run test"
+    },
+    "typeSafety": "TypeScript strict; vite build is gated on it"
+  }
+}
