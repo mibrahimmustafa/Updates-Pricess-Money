@@ -1,6 +1,6 @@
-# pricess_money
+# Dahab Live (دهب لايف)
 
-A new Flutter project.
+Live precious metal (Gold, Silver) and world/Arab currency rates, professional jewelry calculator, and price alerts.
 
 ## Getting Started
 

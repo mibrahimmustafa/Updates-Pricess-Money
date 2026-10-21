@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "product": {
-    "name": "Pricess Money Web",
-    "ArabicName": "بريسيس موني — ويب",
+    "name": "Dahab Live Web",
+    "ArabicName": "دهب لايف — ويب",
     "type": "PWA / SPA",
     "tagline": "Live precious metal & currency rates — no signup, no keys",
     "languages": ["ar (RTL, default)", "en (LTR)"],

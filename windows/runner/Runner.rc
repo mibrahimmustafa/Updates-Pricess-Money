@@ -69,7 +69,7 @@ IDI_APP_ICON            ICON                    "resources\\app_icon.ico"
 #if defined(FLUTTER_VERSION)
 #define VERSION_AS_STRING FLUTTER_VERSION
 #else
-#define VERSION_AS_STRING "1.0.0"
+#define VERSION_AS_STRING "1.0.1"
 #endif
 
 VS_VERSION_INFO VERSIONINFO
@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.pricess" "\0"
-            VALUE "FileDescription", "pricess_money" "\0"
+            VALUE "CompanyName", "com.dahablive" "\0"
+            VALUE "FileDescription", "Dahab Live" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "pricess_money" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.pricess. All rights reserved." "\0"
-            VALUE "OriginalFilename", "pricess_money.exe" "\0"
-            VALUE "ProductName", "pricess_money" "\0"
+            VALUE "InternalName", "dahab_live" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Dahab Live. All rights reserved." "\0"
+            VALUE "OriginalFilename", "dahab_live.exe" "\0"
+            VALUE "ProductName", "Dahab Live" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -6,11 +6,11 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 import 'package:pricess_money/core/constants.dart';
 import 'package:pricess_money/core/utils.dart';
-import 'package:pricess_money/data/models/history_point.dart';
-import 'package:pricess_money/data/models/metal_price.dart';
-import 'package:pricess_money/data/models/exchange_rates.dart';
-import 'package:pricess_money/presentation/controllers/alerts_controller.dart';
-import 'package:pricess_money/presentation/controllers/user_prefs_controller.dart';
+import 'package:pricess_money/features/charts/data/models/history_point.dart';
+import 'package:pricess_money/features/prices/data/models/metal_price.dart';
+import 'package:pricess_money/features/prices/data/models/exchange_rates.dart';
+import 'package:pricess_money/features/alerts/presentation/controllers/alerts_controller.dart';
+import 'package:pricess_money/features/settings/presentation/controllers/user_prefs_controller.dart';
 
 void main() {
   test('user prefs: toggle / preset / reset / persistence round-trip', () async {

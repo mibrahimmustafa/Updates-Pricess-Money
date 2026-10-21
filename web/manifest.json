@@ -1,11 +1,11 @@
 {
-    "name": "pricess_money",
-    "short_name": "pricess_money",
+    "name": "Dahab Live",
+    "short_name": "Dahab Live",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#111111",
     "theme_color": "#D4A548",
-    "description": "A new Flutter project.",
+    "description": "Dahab Live — Live gold, silver and currency rates (USD, SAR, EGP).",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

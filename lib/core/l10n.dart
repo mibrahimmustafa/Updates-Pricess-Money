@@ -1,13 +1,24 @@
-/// Minimal bilingual string table (English / Arabic). MaterialApp uses
-/// `flutter_localizations` delegates for Material widgets, and this class
-/// provides app copy.
-class AppL10n {
-  const AppL10n(this.langCode);
+/// Minimal bilingual string table (English / Arabic).
+///
+/// [MaterialApp] uses `flutter_localizations` delegates for Material widgets.
+/// This class provides all application-specific copy with compile-time typed
+/// getters to eliminate magic-string lookup errors at call sites.
+///
+/// Usage:
+///   final l10n = AppLocalizations(languageCode);
+///   Text(l10n.title)
+///   Text(l10n.translate('custom_key'))  // fallback for dynamic keys
+class AppLocalizations {
+  const AppLocalizations(this.languageCode);
 
-  final String langCode;
+  final String languageCode;
+
+  // ─── Private string tables ────────────────────────────────────────────────
 
   static const Map<String, String> _en = {
-    'title': 'Pricess Money',
+    'title': 'Dahab Live',
+    'tagline': 'Gold, Currency & Banks',
+    'tagline_full': 'Dahab Live – Gold, Currency & Banks',
     'tab_prices': 'Prices',
     'tab_converter': 'Converter',
     'tab_chart': 'Chart',
@@ -56,7 +67,7 @@ class AppL10n {
     'old_gold_note': 'Old-gold karat',
     'metals_mode': 'Metals',
     'currency_mode': 'Currencies',
-    'old_gold_section': 'Old gold to exchange (moyaval)',
+    'old_gold_section': 'Trade-in old gold (scrap / exchange)',
     'old_gold_credit': 'Credit for old gold',
     'net_payable': 'Net payable',
     // Alerts
@@ -97,7 +108,9 @@ class AppL10n {
   };
 
   static const Map<String, String> _ar = {
-    'title': 'بريسيس موني',
+    'title': 'ذهب لايف',
+    'tagline': 'الذهب والعملات والبنوك',
+    'tagline_full': 'دهب لايف – الذهب والعملات والبنوك',
     'tab_prices': 'الأسعار',
     'tab_converter': 'الحاسبة',
     'tab_chart': 'الرسم',
@@ -180,8 +193,122 @@ class AppL10n {
     'theme_dark': 'داكن',
   };
 
-  String t(String key) {
-    final table = langCode == 'ar' ? _ar : _en;
+  // ─── Core lookup ──────────────────────────────────────────────────────────
+
+  /// Looks up [key] in the current language table, falling back to English.
+  String translate(String key) {
+    final table = languageCode == 'ar' ? _ar : _en;
     return table[key] ?? _en[key] ?? key;
   }
+
+  /// Backward-compatible alias for [translate].
+  String t(String key) => translate(key);
+
+  /// Index operator for convenient lookup: `l10n['key']`.
+  String operator [](String key) => translate(key);
+
+  // ─── Typed getters — compile-time safe, no magic strings at call sites ────
+
+  // General
+  String get title => translate('title');
+  String get tagline => translate('tagline');
+  String get taglineFull => translate('tagline_full');
+  String get liveLabel => translate('live');
+  String get retryLabel => translate('retry');
+  String get loadingLabel => translate('loading');
+  String get networkError => translate('error_network');
+  String get pullToRefresh => translate('pull_refresh');
+  String get updatedLabel => translate('updated');
+  String get justNow => translate('just_now');
+  String get minutesAgo => translate('minutes_ago');
+  String get hoursAgo => translate('hours_ago');
+  String get daysAgo => translate('days_ago');
+
+  // Navigation tabs
+  String get tabPrices => translate('tab_prices');
+  String get tabConverter => translate('tab_converter');
+  String get tabChart => translate('tab_chart');
+  String get tabJewelry => translate('tab_jewelry');
+  String get tabMore => translate('tab_more');
+  String get moreTitle => translate('more_title');
+  String get settingsTitle => translate('settings_title');
+
+  // Metals & units
+  String get gold => translate('gold');
+  String get silver => translate('silver');
+  String get perOz => translate('per_oz');
+  String get gram => translate('gram');
+  String get karat => translate('karat');
+  String get metalRatesNote => translate('metal_rates_note');
+
+  // Chart
+  String get range7d => translate('range_7d');
+  String get range30d => translate('range_30d');
+  String get range90d => translate('range_90d');
+  String get pricePerGram => translate('price_per_gram');
+  String get enterWeight => translate('enter_weight');
+  String get metal => translate('metal');
+  String get currency => translate('currency');
+  String get range => translate('range');
+
+  // Converter
+  String get asset => translate('asset');
+  String get amount => translate('amount');
+  String get convertFrom => translate('convert_from');
+  String get result => translate('result');
+  String get weightGrams => translate('weight_grams');
+
+  // Jewelry calculator
+  String get calculatorTitle => translate('calc_title');
+  String get manufacturingFeePerGram => translate('mfg_fee_per_gram');
+  String get vatLabel => translate('vat_label');
+  String get metalValue => translate('metal_value');
+  String get manufacturingTotal => translate('mfg_total');
+  String get vatTotal => translate('vat_total');
+  String get totalCost => translate('total_cost');
+  String get oldGoldWeight => translate('old_gold_weight');
+  String get oldGoldKarat => translate('old_gold_note');
+  String get oldGoldSection => translate('old_gold_section');
+  String get oldGoldCredit => translate('old_gold_credit');
+  String get netPayable => translate('net_payable');
+  String get metalsMode => translate('metals_mode');
+  String get currencyMode => translate('currency_mode');
+
+  // Alerts
+  String get alertsTitle => translate('alerts_title');
+  String get addAlert => translate('add_alert');
+  String get alertWhen => translate('alert_when');
+  String get above => translate('above');
+  String get below => translate('below');
+  String get targetPrice => translate('target_price');
+  String get noAlerts => translate('no_alerts');
+  String get alertActive => translate('alert_active');
+  String get alertFired => translate('alert_fired');
+
+  // Banks / CBE
+  String get banksTitle => translate('banks_title');
+  String get officialRate => translate('official');
+  String get marketRate => translate('market');
+  String get updatedDate => translate('updated_date');
+
+  // Time machine
+  String get timeMachineTitle => translate('timemachine_title');
+  String get historicalPrice => translate('then_price');
+  String get currentPrice => translate('now_price');
+  String get change => translate('change');
+  String get selectYear => translate('select_year');
+  String get since => translate('since');
+
+  // Settings
+  String get defaultCurrency => translate('default_currency');
+  String get language => translate('language');
+  String get chooseCurrencies => translate('choose_currencies');
+  String get chooseAssets => translate('choose_assets');
+  String get presetGcc => translate('preset_gcc');
+  String get presetMena => translate('preset_mena');
+  String get presetDefault => translate('preset_default');
+  String get theme => translate('theme');
+  String get themeSystem => translate('theme_system');
+  String get themeLight => translate('theme_light');
+  String get themeDark => translate('theme_dark');
 }

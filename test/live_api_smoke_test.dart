@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
-import 'package:pricess_money/data/repositories/price_repository.dart';
+import 'package:pricess_money/features/prices/data/repositories/price_repository.dart';
 
 // Live smoke test — hits the real free APIs.
 void main() {
