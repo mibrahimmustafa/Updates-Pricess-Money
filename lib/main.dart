@@ -8,9 +8,12 @@ import 'features/settings/presentation/controllers/locale_controller.dart';
 import 'features/settings/presentation/controllers/theme_mode_controller.dart';
 import 'features/shell/presentation/screens/root_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  initNotifications();
+  // IMPORTANT: must be awaited before runApp() to prevent platform channel
+  // deadlock in release mode where SharedPreferencesAsync() would block
+  // waiting behind an unresolved notifications platform channel call.
+  await initNotifications();
   runApp(const ProviderScope(child: DahabLiveApp()));
 }
 
