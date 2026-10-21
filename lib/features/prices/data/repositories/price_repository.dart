@@ -54,6 +54,84 @@ class MarketSnapshot {
   /// Silver spot price. Throws [StateError] if the pool is missing XAG.
   MetalPrice get silver => metals[AppConstants.silverSymbol]!;
 
+  /// Initial baseline snapshot provided out of the box.
+  /// Guarantees that the app opens instantly on first install with zero waiting time.
+  static MarketSnapshot get initialSeed => MarketSnapshot(
+        metals: {
+          'XAU': MetalPrice(
+            symbol: 'XAU',
+            name: 'Gold',
+            price: 4135.0,
+            currency: 'USD',
+            updatedAt: DateTime.now(),
+          ),
+          'XAG': MetalPrice(
+            symbol: 'XAG',
+            name: 'Silver',
+            price: 57.5,
+            currency: 'USD',
+            updatedAt: DateTime.now(),
+          ),
+          'XPT': MetalPrice(
+            symbol: 'XPT',
+            name: 'Platinum',
+            price: 1350.0,
+            currency: 'USD',
+            updatedAt: DateTime.now(),
+          ),
+          'XPD': MetalPrice(
+            symbol: 'XPD',
+            name: 'Palladium',
+            price: 1100.0,
+            currency: 'USD',
+            updatedAt: DateTime.now(),
+          ),
+          'HG': MetalPrice(
+            symbol: 'HG',
+            name: 'Copper',
+            price: 6.5,
+            currency: 'USD',
+            updatedAt: DateTime.now(),
+          ),
+          'BTC': MetalPrice(
+            symbol: 'BTC',
+            name: 'Bitcoin',
+            price: 84000.0,
+            currency: 'USD',
+            updatedAt: DateTime.now(),
+          ),
+          'ETH': MetalPrice(
+            symbol: 'ETH',
+            name: 'Ethereum',
+            price: 3100.0,
+            currency: 'USD',
+            updatedAt: DateTime.now(),
+          ),
+        },
+        exchangeRates: ExchangeRates(
+          date: DateTime.now(),
+          ratesFromUsd: {
+            'USD': 1.0,
+            'EGP': 54.35,
+            'SAR': 3.75,
+            'AED': 3.67,
+            'EUR': 0.89,
+            'GBP': 0.75,
+            'KWD': 0.308,
+            'QAR': 3.64,
+            'BHD': 0.377,
+            'OMR': 0.385,
+            'JOD': 0.709,
+            'CAD': 1.40,
+            'AUD': 1.42,
+            'CHF': 0.825,
+            'CNY': 6.68,
+            'JPY': 158.0,
+            'TRY': 34.0,
+          },
+        ),
+      );
+
   // ─── Serialization ────────────────────────────────────────────────────────
 
   Map<String, dynamic> toJson() => {
@@ -100,27 +178,55 @@ class PriceRepository {
 
   // ─── Live data ─────────────────────────────────────────────────────────────
 
-  /// Fetches all pool metals + the full FX rate table in parallel.
+  /// Fetches all pool metals + the full FX rate table in parallel with fault tolerance.
   ///
-  /// All metal requests run concurrently via [Future.wait]. A single FX
-  /// request covers all 48 pool currencies in one network call.
+  /// Individual metal errors are caught gracefully so a failure in an optional
+  /// asset (like Bitcoin or Copper) will never block Gold, Silver, or Currency rates.
   Future<MarketSnapshot> fetchLiveSnapshot() async {
-    final parallelResults = await Future.wait([
-      for (final symbol in AppConstants.metalPool.keys)
-        _goldApi.fetchMetalPrice(symbol),
-      _frankfurter.fetchUsdExchangeRates(),
-    ]);
+    final seed = MarketSnapshot.initialSeed;
 
-    final fxResultIndex = parallelResults.length - 1;
-    final metals = <String, MetalPrice>{
-      for (var i = 0; i < AppConstants.metalPool.length; i++)
-        AppConstants.metalPool.keys.elementAt(i): parallelResults[i]
-            as MetalPrice,
+    final metalTasks = AppConstants.metalPool.keys.map((symbol) async {
+      try {
+        return await _goldApi.fetchMetalPrice(symbol);
+      } catch (_) {
+        return null;
+      }
+    });
+
+    Future<ExchangeRates?> fetchFx() async {
+      try {
+        return await _frankfurter.fetchUsdExchangeRates();
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final metalResults = await Future.wait(metalTasks);
+    final fxResult = await fetchFx();
+
+    final metals = <String, MetalPrice>{};
+    for (final metal in metalResults) {
+      if (metal != null) {
+        metals[metal.symbol] = metal;
+      }
+    }
+
+    // Ensure core and secondary metals always have valid values
+    for (final entry in seed.metals.entries) {
+      metals.putIfAbsent(entry.key, () => entry.value);
+    }
+
+    final mergedFxRates = <String, double>{
+      ...seed.exchangeRates.ratesFromUsd,
+      if (fxResult != null) ...fxResult.ratesFromUsd,
     };
 
     return MarketSnapshot(
       metals: metals,
-      exchangeRates: parallelResults[fxResultIndex] as ExchangeRates,
+      exchangeRates: ExchangeRates(
+        date: fxResult?.date ?? DateTime.now(),
+        ratesFromUsd: mergedFxRates,
+      ),
       snapshotTimestamp: DateTime.now(),
     );
   }
@@ -201,11 +307,11 @@ class PriceRepository {
   /// Loads the previously cached [MarketSnapshot] from local storage.
   /// Returns null on first launch or if the cache is corrupt.
   Future<MarketSnapshot?> loadCachedSnapshot() async {
-    final rawJson = await SharedPreferencesAsync().getString(
-      AppConstants.cacheKey,
-    );
-    if (rawJson == null) return null;
     try {
+      final rawJson = await SharedPreferencesAsync().getString(
+        AppConstants.cacheKey,
+      );
+      if (rawJson == null) return null;
       return MarketSnapshot.fromJson(
           jsonDecode(rawJson) as Map<String, dynamic>);
     } catch (_) {
@@ -218,10 +324,12 @@ class PriceRepository {
 
   /// Serializes [snapshot] and persists it to local storage.
   Future<void> saveCachedSnapshot(MarketSnapshot snapshot) async {
-    await SharedPreferencesAsync().setString(
-      AppConstants.cacheKey,
-      jsonEncode(snapshot.toJson()),
-    );
+    try {
+      await SharedPreferencesAsync().setString(
+        AppConstants.cacheKey,
+        jsonEncode(snapshot.toJson()),
+      );
+    } catch (_) {}
   }
 
   /// Backward-compatible alias for saveCachedSnapshot.

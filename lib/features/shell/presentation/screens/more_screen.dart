@@ -110,7 +110,7 @@ class MoreScreen extends ConsumerWidget {
                         borderRadius: AppRadius.s10BorderRadius,
                       ),
                       child: Text(
-                        'v1.0.1',
+                        'v1.0.2',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,

@@ -11,33 +11,21 @@ class GoldApiDataSource {
       : _dio = dio ??
             Dio(BaseOptions(
               baseUrl: AppConstants.goldApiBase,
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-              headers: {'User-Agent': 'DahabLiveApp/1.0'},
+              connectTimeout: const Duration(seconds: 4),
+              receiveTimeout: const Duration(seconds: 4),
+              headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 DahabLiveApp/1.0',
+                'Accept': 'application/json, text/plain, */*',
+              },
             ));
 
   final Dio _dio;
 
-  static const int _maxRetryAttempts = 3;
-  static const Duration _baseRetryDelay = Duration(seconds: 2);
-
   Future<MetalPrice> fetchMetalPrice(String metalSymbol) async {
-    var lastError = Exception('Unknown network error');
-    for (var attempt = 1; attempt <= _maxRetryAttempts; attempt++) {
-      try {
-        final response =
-            await _dio.get<Map<String, dynamic>>('/price/$metalSymbol');
-        return MetalPrice.fromJson(response.data!);
-      } on DioException catch (error) {
-        lastError = error;
-        final statusCode = error.response?.statusCode ?? 0;
-        final isRetryable =
-            statusCode == 429 || statusCode >= 500 || statusCode == 0;
-        if (!isRetryable || attempt == _maxRetryAttempts) rethrow;
-        await Future<void>.delayed(_baseRetryDelay * attempt);
-      }
-    }
-    throw lastError;
+    final response =
+        await _dio.get<Map<String, dynamic>>('/price/$metalSymbol');
+    return MetalPrice.fromJson(response.data!);
   }
 }
 
@@ -48,8 +36,13 @@ class FrankfurterDataSource {
       : _dio = dio ??
             Dio(BaseOptions(
               baseUrl: AppConstants.frankfurterBase,
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
+              connectTimeout: const Duration(seconds: 4),
+              receiveTimeout: const Duration(seconds: 4),
+              headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 DahabLiveApp/1.0',
+                'Accept': 'application/json, text/plain, */*',
+              },
             ));
 
   final Dio _dio;

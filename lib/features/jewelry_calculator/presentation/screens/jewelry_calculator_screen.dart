@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/utils.dart';
 import '../../../../core/widgets/responsive_center.dart';
+import '../../../prices/data/repositories/price_repository.dart';
 import '../../../prices/presentation/controllers/prices_controller.dart';
 import '../../../settings/presentation/controllers/default_currency_controller.dart';
 import '../../../settings/presentation/controllers/locale_controller.dart';
@@ -91,14 +92,7 @@ class _JewelryCalculatorScreenState
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final quoteCurrencyCode = ref.watch(preferredQuoteCurrencyProvider);
-    final snapshot = ref.watch(marketPricesProvider).snapshot;
-
-    if (snapshot == null) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l10n.calculatorTitle)),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
+    final snapshot = ref.watch(marketPricesProvider).snapshot ?? MarketSnapshot.initialSeed;
 
     final gold = snapshot.gold;
     final rates = snapshot.rates;

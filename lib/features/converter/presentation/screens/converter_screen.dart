@@ -62,18 +62,16 @@ class _ConverterScreenState extends ConsumerState<ConverterScreen> {
     final l10n = AppLocalizations(languageCode);
     final theme = Theme.of(context);
     final defaultQuote = ref.watch(preferredQuoteCurrencyProvider);
-    final snapshot = ref.watch(marketPricesProvider).snapshot;
+    final snapshot = ref.watch(marketPricesProvider).snapshot ?? MarketSnapshot.initialSeed;
 
     final appBar = widget.showAppBar
         ? AppBar(title: Text(l10n.tabConverter)) as PreferredSizeWidget?
         : null;
 
-    final body = snapshot == null
-        ? const Center(child: CircularProgressIndicator())
-        : ResponsiveCenter(
-            maxContentWidth: AppDimensions.maxContentWidth,
-            child: _buildConverter(l10n, theme, snapshot, defaultQuote),
-          );
+    final body = ResponsiveCenter(
+      maxContentWidth: AppDimensions.maxContentWidth,
+      child: _buildConverter(l10n, theme, snapshot, defaultQuote),
+    );
 
     return Scaffold(
       appBar: appBar,

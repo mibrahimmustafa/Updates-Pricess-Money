@@ -24,7 +24,7 @@ class HomeScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations(ref.watch(localeProvider));
     final pricesState = ref.watch(marketPricesProvider);
-    final snapshot = pricesState.snapshot;
+    final snapshot = pricesState.snapshot ?? MarketSnapshot.initialSeed;
 
     return Scaffold(
       body: RefreshIndicator(

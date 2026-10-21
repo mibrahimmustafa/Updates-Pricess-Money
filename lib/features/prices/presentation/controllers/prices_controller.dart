@@ -90,19 +90,22 @@ class MarketPricesNotifier extends Notifier<MarketPricesState>
       _pollingTimer?.cancel();
     });
     initialize();
-    return const MarketPricesState(isLoading: true);
+    return MarketPricesState(
+      snapshot: MarketSnapshot.initialSeed,
+      isLoading: true,
+    );
   }
 
   Future<void> initialize() async {
     final repo = ref.read(marketRepositoryProvider);
 
-    // 1) Show cached data immediately (stale-while-revalidate).
+    // 1) Show cached data if available (otherwise seed is already displaying).
     final cached = await repo.loadCachedSnapshot();
     if (cached != null) {
-      state = MarketPricesState(snapshot: cached);
+      state = state.copyWith(snapshot: cached);
     }
 
-    // 2) Fetch fresh data, then start polling.
+    // 2) Fetch fresh live data, then start polling.
     await refresh();
     _startPolling();
   }
